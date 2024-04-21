@@ -1,9 +1,9 @@
 use std::fs;
 
-use anyhow::Result;
+use anyhow::{Ok, Result};
 use csv::Reader;
 
-use crate::opts::CsvOpts;
+use crate::opts::{CsvOpts, OutputFormat};
 
 pub fn process(opts: CsvOpts) -> Result<()> {
     let mut reader = Reader::from_path(opts.input)?;
@@ -11,7 +11,7 @@ pub fn process(opts: CsvOpts) -> Result<()> {
     if reader.records().next().is_none() {
         return Err(anyhow::Error::msg("[NOTICE] The input file is empty"));
     }
-    let header = if opts.header {
+    let header = if opts.header && reader.has_headers() {
         reader
             .headers()?
             .iter()
@@ -41,7 +41,29 @@ pub fn process(opts: CsvOpts) -> Result<()> {
         ret.push(record);
     }
 
-    let json = serde_json::to_string_pretty(&ret)?;
-    fs::write(opts.output, json)?;
-    Ok(())
+    match opts.format {
+        OutputFormat::Json => {
+            let json = serde_json::to_string_pretty(&ret)?;
+            let filename = format!("{}.json", opts.output);
+            fs::write(filename, json)?;
+            Ok(())
+        }
+        OutputFormat::Yaml => {
+            let yaml = serde_yaml::to_string(&ret)?;
+            let filename = format!("{}.yaml", opts.output);
+            fs::write(filename, yaml)?;
+            Ok(())
+        }
+        OutputFormat::Toml => {
+            // TODO: TOML does not support tuple
+            // let toml = toml::to_string(&ret)?;
+            // let filename = format!("{}.toml", opts.output);
+            // fs::write(filename, toml)?;
+            // Ok(())
+            Err(anyhow::Error::msg("[ERROR] TOML does not support tuple"))
+        }
+        OutputFormat::Unknown => Err(anyhow::Error::msg(
+            "[ERRPR] Unknown output format. You can only choose json, yaml or toml.",
+        )),
+    }
 }
