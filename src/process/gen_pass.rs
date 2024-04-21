@@ -21,6 +21,8 @@ pub struct GenPassOpts {
     pub number: bool,
     #[arg(short, long, default_value_t = true)]
     pub symbol: bool,
+    #[arg(long, default_value_t = false)]
+    pub estimate_strength: bool,
 }
 
 fn least_length(length: &str) -> Result<usize, &'static str> {
@@ -77,7 +79,14 @@ impl Process for GenPassOpts {
 
         password.shuffle(&mut rng);
 
-        println!("{}", String::from_utf8(password)?);
+        let password = String::from_utf8(password)?;
+
+        println!("{}", password);
+
+        if self.estimate_strength {
+            let strength = zxcvbn::zxcvbn(&password, &[])?;
+            println!("{:?}", strength);
+        }
 
         Ok(())
     }
