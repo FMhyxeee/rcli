@@ -1,10 +1,12 @@
 use crate::Process;
 
-use std::{fs, path::Path};
+use std::fs;
 
 use anyhow::Result;
 use clap::Parser;
 use csv::Reader;
+
+use super::varify_input_file;
 
 #[derive(Debug, Parser)]
 pub struct CsvOpts {
@@ -20,13 +22,6 @@ pub struct CsvOpts {
     pub delimiter: char,
 }
 
-fn varify_input_file(filename: &str) -> Result<String, &'static str> {
-    if Path::new(filename).exists() {
-        Ok(filename.to_string())
-    } else {
-        Err("File not found, please check your file if exist!")
-    }
-}
 
 #[derive(Debug, Clone, Copy)]
 pub enum OutputFormat {

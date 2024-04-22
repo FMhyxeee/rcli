@@ -13,6 +13,9 @@ fn main() -> Result<()> {
         SubCommand::GenPass(opts) => {
             opts.process()?;
         }
+        SubCommand::Base64(opts) => {
+            opts.process()?;
+        }
     }
     Ok(())
 }
