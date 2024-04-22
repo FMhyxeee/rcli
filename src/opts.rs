@@ -3,7 +3,7 @@ use clap::Parser;
 use crate::process::{Base64SubCommand, CsvOpts, GenPassOpts};
 
 #[derive(Debug, Parser)]
-#[command(version, about, author = "hyx", long_about = None)]
+#[command(version, about, author, long_about = None)]
 pub struct CliOpts {
     #[command(subcommand)]
     pub cmd: SubCommand,

@@ -22,7 +22,6 @@ pub struct CsvOpts {
     pub delimiter: char,
 }
 
-
 #[derive(Debug, Clone, Copy)]
 pub enum OutputFormat {
     Json,

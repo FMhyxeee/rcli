@@ -5,7 +5,7 @@ use rcli::{CliOpts, Process, SubCommand};
 // 构想的命令 rcli csv -i input.csv -o output.csv --header -d ','
 fn main() -> Result<()> {
     let opts = CliOpts::parse();
-    println!("{:?}", opts);
+    // println!("{:?}", opts);
     match opts.cmd {
         SubCommand::Csv(opts) => {
             opts.process()?;
