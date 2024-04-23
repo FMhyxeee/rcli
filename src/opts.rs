@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use crate::process::{Base64SubCommand, CsvOpts, GenPassOpts};
+use crate::process::{Base64SubCommand, CsvOpts, GenPassOpts, TextSubcommand};
 
 #[derive(Debug, Parser)]
 #[command(version, about, author, long_about = None)]
@@ -17,4 +17,6 @@ pub enum SubCommand {
     GenPass(GenPassOpts),
     #[command(subcommand, about = "base64 encode/decode")]
     Base64(Base64SubCommand),
+    #[command(subcommand, about = "text sign/verify")]
+    Text(TextSubcommand),
 }

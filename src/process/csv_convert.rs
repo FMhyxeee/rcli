@@ -6,11 +6,11 @@ use anyhow::Result;
 use clap::Parser;
 use csv::Reader;
 
-use super::varify_input_file;
+use super::utils::verify_file;
 
 #[derive(Debug, Parser)]
 pub struct CsvOpts {
-    #[arg(short, long, value_parser = varify_input_file)]
+    #[arg(short, long, value_parser = verify_file)]
     pub input: String,
     #[arg(short, long, default_value = "output")]
     pub output: String,

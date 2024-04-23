@@ -16,6 +16,9 @@ fn main() -> Result<()> {
         SubCommand::Base64(opts) => {
             opts.process()?;
         }
+        SubCommand::Text(opts) => {
+            opts.process()?;
+        }
     }
     Ok(())
 }

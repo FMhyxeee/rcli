@@ -1,12 +1,12 @@
-use std::{fs::File, io::Read, str::FromStr};
+use std::{io::Read, str::FromStr};
 
 use anyhow::Result;
 use base64::{engine::general_purpose, Engine};
 use clap::Parser;
 
-use crate::Process;
+use crate::{process::utils::get_reader, Process};
 
-use super::varify_input_file;
+use super::utils::verify_file;
 
 #[derive(Debug, Parser)]
 pub enum Base64SubCommand {
@@ -18,7 +18,7 @@ pub enum Base64SubCommand {
 
 #[derive(Debug, Parser)]
 pub struct Base64EncodeOpts {
-    #[arg(short, long, value_parser = varify_input_file, default_value = "-")]
+    #[arg(short, long, value_parser = verify_file, default_value = "-")]
     pub input: String,
 
     #[arg(long, default_value = "standard")]
@@ -45,7 +45,7 @@ impl FromStr for Base64Format {
 
 #[derive(Debug, Parser)]
 pub struct Base64DecodeOpts {
-    #[arg(short, long, value_parser = varify_input_file, default_value = "-")]
+    #[arg(short, long, value_parser = verify_file, default_value = "-")]
     pub input: String,
     #[arg(short, long, default_value = "standard")]
     format: Base64Format,
@@ -55,11 +55,7 @@ impl Process for Base64SubCommand {
     fn process(&self) -> Result<()> {
         match self {
             Base64SubCommand::Encode(opts) => {
-                let mut reader: Box<dyn Read> = if opts.input == "-" {
-                    Box::new(std::io::stdin())
-                } else {
-                    Box::new(File::open(&opts.input)?)
-                };
+                let mut reader = get_reader(&opts.input)?;
 
                 let mut buf = String::new();
                 reader.read_to_string(&mut buf)?;
@@ -74,11 +70,7 @@ impl Process for Base64SubCommand {
 
             // Decode might be a bit tricky, because we need to know the format of the input
             Base64SubCommand::Decode(opts) => {
-                let mut reader: Box<dyn Read> = if opts.input == "-" {
-                    Box::new(std::io::stdin())
-                } else {
-                    Box::new(File::open(&opts.input)?)
-                };
+                let mut reader = get_reader(&opts.input)?;
 
                 let mut buf = String::new();
                 reader.read_to_string(&mut buf)?;
