@@ -31,7 +31,7 @@ pub fn get_reader(input: &str) -> Result<Box<dyn Read>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::process::utils::verify_file;
+    use crate::utils::verify_file;
 
     #[test]
     fn test_varify_input_file() {

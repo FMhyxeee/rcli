@@ -1,71 +1,16 @@
-use std::{collections::HashMap, fs, io::Read, path::PathBuf};
+use std::{collections::HashMap, fs, io::Read};
 
-use anyhow::{bail, Error, Ok, Result};
-use clap::Parser;
+use anyhow::{Ok, Result};
 use ed25519_dalek::{Signer, SigningKey, Verifier, VerifyingKey};
 use rand::rngs::OsRng;
 
-use crate::Process;
-
-use super::{
-    gen_pass::process_genpass,
-    utils::{get_reader, verify_file, verify_path},
+use crate::{
+    cli::{TextSignFormat, TextSubcommand},
+    utils::get_reader,
+    Process,
 };
 
-#[derive(Debug, Parser)]
-pub enum TextSubcommand {
-    #[command(about = "Sign a message with a private/shared key")]
-    Sign(TextSignOpts),
-    #[command(about = "Verify a signed message")]
-    Verify(TextVerifyOpts),
-    #[command(about = "Generate a key pair")]
-    Generate(KeyGenerateOpts),
-}
-
-#[derive(Debug, Parser)]
-pub struct TextSignOpts {
-    #[arg(short, long, value_parser = verify_file, default_value = "-")]
-    pub input: String,
-    #[arg(short, long, value_parser = verify_file)]
-    pub key: String,
-    #[arg(long, default_value = "blake3", value_parser = parse_format)]
-    pub format: TextSignFormat,
-}
-
-#[derive(Debug, Parser)]
-pub struct TextVerifyOpts {
-    #[arg(short, long, value_parser = verify_file, default_value = "-")]
-    pub input: String,
-    #[arg(short, long, value_parser = verify_file)]
-    pub key: String,
-    #[arg(short, long)]
-    pub sig: String,
-    #[arg(long, default_value = "blake3", value_parser = parse_format)]
-    pub format: TextSignFormat,
-}
-
-#[derive(Debug, Parser)]
-pub struct KeyGenerateOpts {
-    #[arg(long, default_value = "blake3", value_parser = parse_format)]
-    pub format: TextSignFormat,
-    #[arg(short, long, value_parser = verify_path)]
-    pub output_path: PathBuf,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum TextSignFormat {
-    Blake3,
-    Ed25519,
-}
-
-fn parse_format(s: &str) -> Result<TextSignFormat, Error> {
-    let format = match s {
-        "blake3" => TextSignFormat::Blake3,
-        "ed25519" => TextSignFormat::Ed25519,
-        _ => bail!("Invalid format"),
-    };
-    Ok(format)
-}
+use super::gen_pass::process_genpass;
 
 trait TextSigner {
     // signer could sign any input data

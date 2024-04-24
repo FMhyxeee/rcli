@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use crate::process::{Base64SubCommand, CsvOpts, GenPassOpts, TextSubcommand};
+use crate::cli::{Base64SubCommand, CsvOpts, GenPassOpts, TextSubcommand};
 
 #[derive(Debug, Parser)]
 #[command(version, about, author, long_about = None)]
