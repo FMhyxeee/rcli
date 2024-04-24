@@ -10,6 +10,16 @@ pub fn verify_file(filename: &str) -> Result<String, &'static str> {
     }
 }
 
+pub fn verify_path(filename: &str) -> Result<String, &'static str> {
+    // if input is "-" or file exists
+    let p = Path::new(filename);
+    if filename == "-" || p.exists() {
+        Ok(filename.to_string())
+    } else {
+        Err("The input file does not exist")
+    }
+}
+
 pub fn get_reader(input: &str) -> Result<Box<dyn Read>> {
     let reader: Box<dyn Read> = if input == "-" {
         Box::new(std::io::stdin())

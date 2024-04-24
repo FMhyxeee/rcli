@@ -38,56 +38,70 @@ fn least_length(length: &str) -> Result<usize, &'static str> {
 
 impl Process for GenPassOpts {
     fn process(&self) -> Result<()> {
-        let mut rng = rand::thread_rng();
-        let mut password = Vec::new();
-
-        // In order to get all of the characters that the user wants to use in the password at least once,
-        // we need to get at least one of each type of character.
-        let mut chars = Vec::new();
-
-        if self.uppercase {
-            chars.extend_from_slice(UPPER);
-            if let Some(c) = UPPER.choose(&mut rng) {
-                password.push(*c);
-            }
-        }
-        if self.lowercase {
-            chars.extend_from_slice(LOWER);
-            if let Some(c) = LOWER.choose(&mut rng) {
-                password.push(*c);
-            }
-        }
-        if self.number {
-            chars.extend_from_slice(NUMBER);
-            if let Some(c) = NUMBER.choose(&mut rng) {
-                password.push(*c);
-            }
-        }
-        if self.symbol {
-            chars.extend_from_slice(SYMBOL);
-            if let Some(c) = SYMBOL.choose(&mut rng) {
-                password.push(*c);
-            }
-        }
-
-        for _ in 0..(self.length - password.len()) {
-            let c = chars.choose(&mut rng).expect(
-                "chars won't be empty, please varify your input! DO NOT make all options false!",
-            );
-            password.push(*c);
-        }
-
-        password.shuffle(&mut rng);
-
-        let password = String::from_utf8(password)?;
-
-        println!("{}", password);
-
-        if self.estimate_strength {
-            let strength = zxcvbn::zxcvbn(&password, &[])?;
-            println!("{:?}", strength);
-        }
-
+        let result = process_genpass(
+            self.length,
+            self.uppercase,
+            self.lowercase,
+            self.number,
+            self.symbol,
+        )?;
+        println!("{}", result);
         Ok(())
     }
+}
+
+pub fn process_genpass(
+    length: usize,
+    uppercase: bool,
+    lowercase: bool,
+    number: bool,
+    symbol: bool,
+) -> Result<String> {
+    let mut rng = rand::thread_rng();
+    let mut password = Vec::new();
+
+    // In order to get all of the characters that the user wants to use in the password at least once,
+    // we need to get at least one of each type of character.
+    let mut chars = Vec::new();
+
+    if uppercase {
+        chars.extend_from_slice(UPPER);
+        if let Some(c) = UPPER.choose(&mut rng) {
+            password.push(*c);
+        }
+    }
+    if lowercase {
+        chars.extend_from_slice(LOWER);
+        if let Some(c) = LOWER.choose(&mut rng) {
+            password.push(*c);
+        }
+    }
+    if number {
+        chars.extend_from_slice(NUMBER);
+        if let Some(c) = NUMBER.choose(&mut rng) {
+            password.push(*c);
+        }
+    }
+    if symbol {
+        chars.extend_from_slice(SYMBOL);
+        if let Some(c) = SYMBOL.choose(&mut rng) {
+            password.push(*c);
+        }
+    }
+
+    for _ in 0..(length - password.len()) {
+        let c = chars.choose(&mut rng).expect(
+            "chars won't be empty, please varify your input! DO NOT make all options false!",
+        );
+        password.push(*c);
+    }
+
+    password.shuffle(&mut rng);
+
+    let password = String::from_utf8(password)?;
+
+    let strength = zxcvbn::zxcvbn(&password, &[])?;
+    eprintln!("{:?}", strength);
+
+    Ok(password)
 }
