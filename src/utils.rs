@@ -1,5 +1,9 @@
 use anyhow::Result;
-use std::{fs::File, io::Read, path::Path};
+use std::{
+    fs::File,
+    io::Read,
+    path::{Path, PathBuf},
+};
 
 pub fn verify_file(filename: &str) -> Result<String, &'static str> {
     // if the input is "-", we should read from stdin
@@ -10,13 +14,13 @@ pub fn verify_file(filename: &str) -> Result<String, &'static str> {
     }
 }
 
-pub fn verify_path(filename: &str) -> Result<String, &'static str> {
+pub fn verify_path(path: &str) -> Result<PathBuf, &'static str> {
     // if input is "-" or file exists
-    let p = Path::new(filename);
-    if filename == "-" || p.exists() {
-        Ok(filename.to_string())
+    let p = Path::new(path);
+    if p.exists() && p.is_dir() {
+        Ok(path.into())
     } else {
-        Err("The input file does not exist")
+        Err("The path does not exist or is not a directory")
     }
 }
 
