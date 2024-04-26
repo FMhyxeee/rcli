@@ -1,8 +1,11 @@
 use std::{collections::HashMap, fs, io::Read};
 
-use anyhow::{Ok, Result};
+use anyhow::{bail, Ok, Result};
+use chacha20poly1305::{
+    aead::{generic_array::GenericArray, Aead, KeyInit, OsRng},
+    ChaCha20Poly1305,
+};
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
-use rand::rngs::OsRng;
 
 use crate::{
     cli::{TextSignFormat, TextSubcommand},
@@ -155,6 +158,63 @@ pub fn process_text_key_generate(format: TextSignFormat) -> Result<HashMap<&'sta
     }
 }
 
+struct ChaCha20Poly1305DD;
+
+impl ChaCha20Poly1305DD {
+    fn encrypt(&self, key_reader: &mut dyn Read, content: &mut dyn Read) -> Result<Vec<u8>> {
+        // 256-bits key
+        // 96-bits nonce
+
+        let mut key_buf = Vec::new();
+        key_reader.read_to_end(&mut key_buf)?;
+
+        // check the length of buf
+        if key_buf.len() != (32 + 12) {
+            bail!("The length of input data is too short");
+        }
+
+        let key = &key_buf[..32];
+        let nonce = &key_buf[32..32 + 12];
+
+        let key = GenericArray::from_slice(key);
+        let nonce = GenericArray::from_slice(nonce);
+
+        let mut content_buf = Vec::new();
+        content.read_to_end(&mut content_buf)?;
+
+        let cipher = ChaCha20Poly1305::new(key);
+        let ciphertext = cipher.encrypt(nonce, content_buf.as_slice()).unwrap();
+        Ok(ciphertext)
+    }
+
+    fn decrypt(&self, key_reader: &mut dyn Read, content: &mut dyn Read) -> Result<Vec<u8>> {
+        // 256-bits key
+        // 96-bits nonce
+
+        let mut key_buf = Vec::new();
+        key_reader.read_to_end(&mut key_buf)?;
+
+        // check the length of buf
+        if key_buf.len() != (32 + 12) {
+            bail!("The length of input data is too short");
+        }
+
+        let key = &key_buf[..32];
+        let nonce = &key_buf[32..32 + 12];
+
+        let key = GenericArray::from_slice(key);
+        let nonce = GenericArray::from_slice(nonce);
+
+        let cipher = ChaCha20Poly1305::new(key);
+
+        let mut content_buf = Vec::new();
+        content.read_to_end(&mut content_buf)?;
+
+        let plaintext = cipher.decrypt(nonce, content_buf.as_slice()).unwrap();
+        Ok(plaintext)
+    }
+}
+
 impl Process for TextSubcommand {
     fn process(&self) -> Result<()> {
         match self {
@@ -177,6 +237,18 @@ impl Process for TextSubcommand {
                     let path = opts.output_path.join(path);
                     fs::write(path, key)?;
                 }
+            }
+            TextSubcommand::Encrypt(opts) => {
+                let mut key_reader = get_reader(&opts.input)?;
+                let mut content_reader = get_reader(&opts.key)?;
+                let sig = ChaCha20Poly1305DD.encrypt(&mut key_reader, &mut content_reader)?;
+                println!("{:?}", sig);
+            }
+            TextSubcommand::Decrypt(opts) => {
+                let mut key_reader = get_reader(&opts.input)?;
+                let mut content_reader = get_reader(&opts.key)?;
+                let sig = ChaCha20Poly1305DD.decrypt(&mut key_reader, &mut content_reader)?;
+                println!("{:?}", sig);
             }
         }
         Ok(())
