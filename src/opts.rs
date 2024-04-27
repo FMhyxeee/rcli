@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use crate::cli::{Base64SubCommand, CsvOpts, GenPassOpts, TextSubcommand};
+use crate::cli::{Base64SubCommand, CsvOpts, GenPassOpts, HttpServeOpts, TextSubcommand};
 
 #[derive(Debug, Parser)]
 #[command(version, about, author, long_about = None)]
@@ -19,4 +19,6 @@ pub enum SubCommand {
     Base64(Base64SubCommand),
     #[command(subcommand, about = "text sign/verify")]
     Text(TextSubcommand),
+    #[command(about = "http server")]
+    Http(HttpServeOpts),
 }

@@ -9,7 +9,7 @@ use anyhow::Result;
 use csv::Reader;
 
 impl Process for CsvOpts {
-    fn process(&self) -> Result<()> {
+    async fn process(&self) -> Result<()> {
         let mut reader = Reader::from_path(&self.input)?;
         // check if the csv file is empty
         if reader.records().next().is_none() {

@@ -9,7 +9,7 @@ use crate::{
 };
 
 impl Process for Base64SubCommand {
-    fn process(&self) -> Result<()> {
+    async fn process(&self) -> Result<()> {
         match self {
             Base64SubCommand::Encode(opts) => {
                 let mut reader = get_reader(&opts.input)?;

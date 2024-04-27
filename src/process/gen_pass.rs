@@ -6,7 +6,7 @@ use anyhow::Result;
 use rand::seq::SliceRandom;
 
 impl Process for GenPassOpts {
-    fn process(&self) -> Result<()> {
+    async fn process(&self) -> Result<()> {
         let result = process_genpass(
             self.length,
             self.uppercase,

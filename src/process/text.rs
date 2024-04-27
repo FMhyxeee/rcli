@@ -216,7 +216,7 @@ impl ChaCha20Poly1305DD {
 }
 
 impl Process for TextSubcommand {
-    fn process(&self) -> Result<()> {
+    async fn process(&self) -> Result<()> {
         match self {
             TextSubcommand::Sign(opts) => {
                 let mut reader = get_reader(&opts.input)?;

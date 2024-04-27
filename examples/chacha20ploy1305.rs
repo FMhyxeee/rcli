@@ -14,11 +14,8 @@ fn main() -> Result<()> {
     let key = key.to_vec();
     let nonce = nonce.to_vec();
 
-    let data = key
-        .into_iter()
-        .chain(nonce.into_iter())
-        .collect::<Vec<u8>>();
-    fs::write("fixtures/chacha20ploy1305.key", &data)?;
+    let data = key.into_iter().chain(nonce).collect::<Vec<u8>>();
+    fs::write("fixtures/chacha20ploy1305.key", data)?;
 
     Ok(())
 }
