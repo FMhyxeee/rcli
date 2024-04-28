@@ -258,8 +258,11 @@ impl Process for TextSubcommand {
 #[cfg(test)]
 mod tests {
 
+    use crate::process::text::process_text_verify;
+
     use super::TextSignFormat;
     use anyhow::Result;
+    use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
     const KEY: &[u8] = include_bytes!("../../fixtures/blake3.txt");
 
     #[test]
@@ -271,6 +274,17 @@ mod tests {
         let sig = super::process_text_sign(&mut reader, KEY, format)?;
         let result = super::process_text_verify(&mut reader1, KEY, &sig, format)?;
         assert!(result);
+        Ok(())
+    }
+
+    #[test]
+    fn test_process_text_verify() -> Result<()> {
+        let mut reader = "hello".as_bytes();
+        let format = TextSignFormat::Blake3;
+        let sig = "33Ypo4rveYpWmJKAiGnnse-wHQhMVujjmcVkV4Tl43k";
+        let sig = URL_SAFE_NO_PAD.decode(sig)?;
+        let ret = process_text_verify(&mut reader, KEY, &sig, format)?;
+        assert!(ret);
         Ok(())
     }
 }

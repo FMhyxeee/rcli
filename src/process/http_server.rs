@@ -6,6 +6,7 @@ use axum::{
     routing::get,
     Router,
 };
+use tower_http::services::ServeDir;
 use tracing::{info, warn};
 
 use crate::{cli::HttpServeOpts, Process};
@@ -30,9 +31,10 @@ pub async fn process_http_server(path: PathBuf, port: u16) -> anyhow::Result<()>
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
     info!("Serving {:?} on {}", path, addr);
 
-    let state = HttpServeState { path };
+    let state = HttpServeState { path: path.clone() };
     // axum router
     let router = Router::new()
+        .nest_service("/tower", ServeDir::new(path))
         .route("/", get(file_handler))
         .with_state(Arc::new(state));
 
@@ -51,6 +53,10 @@ async fn file_handler(
     if !p.exists() {
         (StatusCode::NOT_FOUND, "File not found".to_string())
     } else {
+        // TODO: test p is a directory
+        // if it is a directory, list all files/subdirectories
+        // as <li>< a href="/path/to/file">file name</a></li>
+        // <html><body><ul>...</ul></body></html>
         match tokio::fs::read_to_string(p).await {
             Ok(content) => {
                 info!("Read {} bytes", content.len());
@@ -61,5 +67,20 @@ async fn file_handler(
                 (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_file_handler() {
+        let state = Arc::new(HttpServeState {
+            path: PathBuf::from("."),
+        });
+        let (status, content) = file_handler(State(state), Path("Cargo.toml".to_string())).await;
+        assert_eq!(status, StatusCode::OK);
+        assert!(content.trim().starts_with("[package]"));
     }
 }
