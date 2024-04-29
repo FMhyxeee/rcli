@@ -1,49 +1,57 @@
+use crate::Base64Format;
 use anyhow::Result;
-use base64::{engine::general_purpose, Engine};
+use base64::{
+    engine::general_purpose::{STANDARD, URL_SAFE_NO_PAD},
+    Engine,
+};
 use std::io::Read;
 
-use crate::{
-    cli::{Base64Format, Base64SubCommand},
-    utils::get_reader,
-    Process,
-};
+pub fn process_encode(reader: &mut dyn Read, format: Base64Format) -> Result<String> {
+    let mut buf = Vec::new();
+    reader.read_to_end(&mut buf)?;
+    let encoded = match format {
+        Base64Format::Standard => STANDARD.encode(&buf),
+        Base64Format::UrlSafe => URL_SAFE_NO_PAD.encode(&buf),
+    };
 
-impl Process for Base64SubCommand {
-    async fn process(&self) -> Result<()> {
-        match self {
-            Base64SubCommand::Encode(opts) => {
-                let mut reader = get_reader(&opts.input)?;
+    Ok(encoded)
+}
 
-                let mut buf = String::new();
-                reader.read_to_string(&mut buf)?;
-                let buf = buf.trim();
+pub fn process_decode(reader: &mut dyn Read, format: Base64Format) -> Result<String> {
+    let mut buf = String::new();
+    reader.read_to_string(&mut buf)?;
+    // avoid accidental newlines
+    let buf = buf.trim();
 
-                let encode = match opts.format {
-                    Base64Format::Standard => general_purpose::STANDARD.encode(buf),
-                    Base64Format::UrlSafe => general_purpose::URL_SAFE_NO_PAD.encode(buf),
-                };
-                println!("{}", encode);
-            }
+    let decoded = match format {
+        Base64Format::Standard => STANDARD.decode(buf)?,
+        Base64Format::UrlSafe => URL_SAFE_NO_PAD.decode(buf)?,
+    };
+    // TODO: decoded data might not be string (but for this example, we assume it is)
+    Ok(String::from_utf8(decoded)?)
+}
 
-            // Decode might be a bit tricky, because we need to know the format of the input
-            Base64SubCommand::Decode(opts) => {
-                let mut reader = get_reader(&opts.input)?;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::get_reader;
 
-                let mut buf = String::new();
-                reader.read_to_string(&mut buf)?;
+    #[test]
+    fn test_process_encode() -> Result<()> {
+        let input = "Cargo.toml";
+        let mut reader = get_reader(input)?;
+        let format = Base64Format::Standard;
+        assert!(process_encode(&mut reader, format).is_ok());
+        Ok(())
+    }
 
-                match opts.format {
-                    Base64Format::Standard => {
-                        let decoded = general_purpose::STANDARD.decode(buf)?;
-                        println!("{}", String::from_utf8_lossy(&decoded));
-                    }
-                    Base64Format::UrlSafe => {
-                        let decoded = general_purpose::URL_SAFE_NO_PAD.decode(buf)?;
-                        println!("{}", String::from_utf8_lossy(&decoded));
-                    }
-                }
-            }
-        }
+    #[test]
+    fn test_process_decode() -> Result<()> {
+        let input = "fixtures/b64.txt";
+        let mut reader = get_reader(input)?;
+        let format = Base64Format::UrlSafe;
+        process_decode(&mut reader, format)?;
+
         Ok(())
     }
 }

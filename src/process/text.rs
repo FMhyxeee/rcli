@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, io::Read};
+use std::{collections::HashMap, io::Read};
 
 use anyhow::{bail, Ok, Result};
 use chacha20poly1305::{
@@ -7,13 +7,8 @@ use chacha20poly1305::{
 };
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 
-use crate::{
-    cli::{TextSignFormat, TextSubcommand},
-    utils::get_reader,
-    Process,
-};
-
 use super::gen_pass::process_genpass;
+use crate::cli::TextSignFormat;
 
 pub trait TextSigner {
     // signer could sign any input data
@@ -158,10 +153,10 @@ pub fn process_text_key_generate(format: TextSignFormat) -> Result<HashMap<&'sta
     }
 }
 
-struct ChaCha20Poly1305DD;
+pub struct ChaCha20Poly1305DD;
 
 impl ChaCha20Poly1305DD {
-    fn encrypt(&self, key_reader: &mut dyn Read, content: &mut dyn Read) -> Result<Vec<u8>> {
+    pub fn encrypt(key_reader: &mut dyn Read, content: &mut dyn Read) -> Result<Vec<u8>> {
         // 256-bits key
         // 96-bits nonce
 
@@ -187,7 +182,7 @@ impl ChaCha20Poly1305DD {
         Ok(ciphertext)
     }
 
-    fn decrypt(&self, key_reader: &mut dyn Read, content: &mut dyn Read) -> Result<Vec<u8>> {
+    pub fn decrypt(key_reader: &mut dyn Read, content: &mut dyn Read) -> Result<Vec<u8>> {
         // 256-bits key
         // 96-bits nonce
 
@@ -212,46 +207,6 @@ impl ChaCha20Poly1305DD {
 
         let plaintext = cipher.decrypt(nonce, content_buf.as_slice()).unwrap();
         Ok(plaintext)
-    }
-}
-
-impl Process for TextSubcommand {
-    async fn process(&self) -> Result<()> {
-        match self {
-            TextSubcommand::Sign(opts) => {
-                let mut reader = get_reader(&opts.input)?;
-                let key = fs::read(&opts.key)?;
-                let sig = process_text_sign(&mut reader, &key, opts.format)?;
-                println!("{:?}", sig);
-            }
-            TextSubcommand::Verify(opts) => {
-                let mut reader = get_reader(&opts.input)?;
-                let key = fs::read(&opts.key)?;
-                let sig = fs::read(&opts.sig)?;
-                let result = process_text_verify(&mut reader, &key, &sig, opts.format)?;
-                println!("{}", result);
-            }
-            TextSubcommand::Generate(opts) => {
-                let map = process_text_key_generate(opts.format)?;
-                for (path, key) in map {
-                    let path = opts.output_path.join(path);
-                    fs::write(path, key)?;
-                }
-            }
-            TextSubcommand::Encrypt(opts) => {
-                let mut key_reader = get_reader(&opts.input)?;
-                let mut content_reader = get_reader(&opts.key)?;
-                let sig = ChaCha20Poly1305DD.encrypt(&mut key_reader, &mut content_reader)?;
-                println!("{:?}", sig);
-            }
-            TextSubcommand::Decrypt(opts) => {
-                let mut key_reader = get_reader(&opts.input)?;
-                let mut content_reader = get_reader(&opts.key)?;
-                let sig = ChaCha20Poly1305DD.decrypt(&mut key_reader, &mut content_reader)?;
-                println!("{:?}", sig);
-            }
-        }
-        Ok(())
     }
 }
 

@@ -9,26 +9,13 @@ use axum::{
 use tower_http::services::ServeDir;
 use tracing::{info, warn};
 
-use crate::{cli::HttpServeOpts, Process};
-
 #[derive(Debug)]
 struct HttpServeState {
     path: PathBuf,
 }
 
-impl Process for HttpServeOpts {
-    async fn process(&self) -> anyhow::Result<()> {
-        let path = self.dir.clone();
-        let port = self.port;
-
-        process_http_server(path, port).await?;
-
-        Ok(())
-    }
-}
-
-pub async fn process_http_server(path: PathBuf, port: u16) -> anyhow::Result<()> {
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+pub async fn process_http_serve(path: PathBuf, port: u16) -> anyhow::Result<()> {
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
     info!("Serving {:?} on {}", path, addr);
 
     let state = HttpServeState { path: path.clone() };

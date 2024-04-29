@@ -1,14 +1,12 @@
 use clap::Parser;
+use zxcvbn::zxcvbn;
 
-pub const UPPER: &[u8] = b"ABCDEFGHJKLMNOPQRSTUVWXYZ";
-pub const LOWER: &[u8] = b"abcdefghijkmnopqrstuvwxyz";
-pub const NUMBER: &[u8] = b"0123456789";
-pub const SYMBOL: &[u8] = b"!@#$%^&*_";
+use crate::CmdExector;
 
 #[derive(Debug, Parser)]
 pub struct GenPassOpts {
     #[arg(short, long, default_value_t = 16, value_parser = least_length)]
-    pub length: usize,
+    pub length: u8,
     #[arg(long, default_value_t = false)]
     pub uppercase: bool,
     #[arg(long, default_value_t = true)]
@@ -17,8 +15,6 @@ pub struct GenPassOpts {
     pub number: bool,
     #[arg(short, long, default_value_t = true)]
     pub symbol: bool,
-    #[arg(long, default_value_t = false)]
-    pub estimate_strength: bool,
 }
 
 fn least_length(length: &str) -> Result<usize, &'static str> {
@@ -29,5 +25,23 @@ fn least_length(length: &str) -> Result<usize, &'static str> {
         Err("The length of password must be greater than 4!")
     } else {
         Ok(length)
+    }
+}
+
+impl CmdExector for GenPassOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        let ret = crate::process_genpass(
+            self.length,
+            self.uppercase,
+            self.lowercase,
+            self.number,
+            self.symbol,
+        )?;
+        println!("{}", ret);
+
+        // output password strength in stderr
+        let estimate = zxcvbn(&ret, &[])?;
+        eprintln!("Password strength: {}", estimate.score());
+        Ok(())
     }
 }
