@@ -1,11 +1,11 @@
-use anyhow::Result;
-use rcli::Opts;
+use clap::Parser;
+use rcli::{CmdExector, Opts};
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
     let opts = Opts::parse();
-    // println!("{:?}", opts);
-    opts.cmd.process().await?;
+    opts.cmd.execute().await?;
+
     Ok(())
 }
