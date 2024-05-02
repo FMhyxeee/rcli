@@ -219,6 +219,7 @@ mod tests {
     use anyhow::Result;
     use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
     const KEY: &[u8] = include_bytes!("../../fixtures/blake3.txt");
+    const CHACHA20_POLY1305_DD: &[u8] = include_bytes!("../../fixtures/chacha20ploy1305.key");
 
     #[test]
     fn test_process_text_sign() -> Result<()> {
@@ -240,6 +241,19 @@ mod tests {
         let sig = URL_SAFE_NO_PAD.decode(sig)?;
         let ret = process_text_verify(&mut reader, KEY, &sig, format)?;
         assert!(ret);
+        Ok(())
+    }
+
+    #[test]
+    fn test_encrypt_decrypt() -> Result<()> {
+        let key = CHACHA20_POLY1305_DD;
+        let content = "hello".as_bytes();
+
+        let ciphertext =
+            super::ChaCha20Poly1305DD::encrypt(&mut key.as_ref(), &mut content.as_ref())?;
+        let plaintext =
+            super::ChaCha20Poly1305DD::decrypt(&mut key.as_ref(), &mut ciphertext.as_slice())?;
+        assert_eq!(content, plaintext.as_slice());
         Ok(())
     }
 }
