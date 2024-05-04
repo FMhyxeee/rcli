@@ -2,6 +2,7 @@ mod base64;
 mod csv;
 mod genpass;
 mod http;
+mod jwt;
 mod text;
 
 use clap::Parser;
@@ -12,6 +13,7 @@ pub use base64::*;
 pub use csv::*;
 pub use genpass::*;
 pub use http::*;
+pub use jwt::*;
 pub use text::*;
 
 #[derive(Debug, Parser)]
@@ -34,6 +36,8 @@ pub enum SubCommand {
     Text(TextSubcommand),
     #[command(about = "http server")]
     Http(HttpServeOpts),
+    #[command(subcommand, about = "jwt encode/decode")]
+    Jwt(JwtSubCommand),
 }
 
 pub fn verify_file(filename: &str) -> Result<String, &'static str> {

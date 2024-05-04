@@ -1,11 +1,7 @@
 use std::{net::SocketAddr, path::PathBuf, sync::Arc};
 
-use axum::{
-    extract::{Path, State},
-    http::StatusCode,
-    routing::get,
-    Router,
-};
+use askama_axum::Template;
+use axum::{extract::State, response::Html, routing::get, Router};
 use tower_http::services::ServeDir;
 use tracing::{info, warn};
 
@@ -30,44 +26,32 @@ pub async fn process_http_serve(path: PathBuf, port: u16) -> anyhow::Result<()> 
     Ok(())
 }
 
-async fn file_handler(
-    State(state): State<Arc<HttpServeState>>,
-    Path(path): Path<String>,
-) -> (StatusCode, String) {
-    let p = std::path::Path::new(&state.path).join(path);
-    info!("Requesting file: {:?}", p);
+async fn file_handler(State(state): State<Arc<HttpServeState>>) -> Html<String> {
+    let path = &state.path;
+    let file_list = match path.read_dir() {
+        Ok(files) => files
+            .filter_map(|f| f.ok())
+            .filter_map(|f| f.file_name().into_string().ok())
+            .collect(),
+        Err(e) => {
+            warn!("Failed to read directory: {:?}", e);
+            Vec::new()
+        }
+    };
 
-    if !p.exists() {
-        (StatusCode::NOT_FOUND, "File not found".to_string())
-    } else {
-        // TODO: test p is a directory
-        // if it is a directory, list all files/subdirectories
-        // as <li>< a href="/path/to/file">file name</a></li>
-        // <html><body><ul>...</ul></body></html>
-        match tokio::fs::read_to_string(p).await {
-            Ok(content) => {
-                info!("Read {} bytes", content.len());
-                (StatusCode::OK, content)
-            }
-            Err(e) => {
-                warn!("Error reading file: {:?}", e);
-                (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
-            }
+    let index = IndexTemplate { file_list };
+
+    match index.render() {
+        Ok(content) => Html(content),
+        Err(e) => {
+            warn!("Failed to render template: {:?}", e);
+            Html("Failed to render template".to_string())
         }
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_file_handler() {
-        let state = Arc::new(HttpServeState {
-            path: PathBuf::from("."),
-        });
-        let (status, content) = file_handler(State(state), Path("Cargo.toml".to_string())).await;
-        assert_eq!(status, StatusCode::OK);
-        assert!(content.trim().starts_with("[package]"));
-    }
+#[derive(Template)]
+#[template(path = "index.html")]
+struct IndexTemplate {
+    file_list: Vec<String>,
 }

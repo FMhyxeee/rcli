@@ -9,6 +9,8 @@ license = "MIT"
 
 [dependencies]
 anyhow = "1.0.82"
+askama = "0.12.1"
+askama_axum = "0.4.0"
 axum = "0.7.5"
 base64 = "0.22.0"
 blake3 = "1.5.1"
@@ -17,10 +19,13 @@ clap = { version = "4.5.4", features = ["derive"] }
 csv = "1.3.0"
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 enum_dispatch = "0.3.13"
+hmac = "0.12.1"
+jwt = "0.16.0"
 rand = "0.8.5"
 serde = { version = "1.0.198", features = ["serde_derive"] }
 serde_json = "1.0.116"
 serde_yaml = "0.9.34"
+sha2 = "0.10.8"
 tokio = { version = "1.37.0", features = ["full"] }
 toml = "0.8.12"
 tower-http = { version = "0.5.2", features = ["compression-full", "cors", "trace", "fs"] }

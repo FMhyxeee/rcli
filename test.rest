@@ -1,5 +1,5 @@
 ### Test Index page
-GET http://localhost:8080/Cargo.toml
+GET http://localhost:8080/
 
 
 

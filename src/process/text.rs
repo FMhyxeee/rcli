@@ -245,6 +245,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::useless_asref)]
     fn test_encrypt_decrypt() -> Result<()> {
         let key = CHACHA20_POLY1305_DD;
         let content = "hello".as_bytes();
